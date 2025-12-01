@@ -1,3 +1,4 @@
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -11,6 +12,8 @@ export enum BuildingType {
   Park = 'Park',
   School = 'School',
   PowerPlant = 'PowerPlant',
+  Hospital = 'Hospital',
+  PoliceStation = 'PoliceStation',
 }
 
 export const TOOL_UPGRADE = 'Upgrade'; // Special tool identifier

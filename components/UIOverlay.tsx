@@ -1,3 +1,4 @@
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -28,6 +29,8 @@ const tools = [
   BuildingType.Park,
   BuildingType.School,
   BuildingType.PowerPlant,
+  BuildingType.Hospital,
+  BuildingType.PoliceStation,
 ];
 
 const ToolButton: React.FC<{

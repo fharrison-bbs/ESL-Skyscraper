@@ -1,3 +1,4 @@
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -38,6 +39,7 @@ function App() {
   const [grid, setGrid] = useState<Grid>(createInitialGrid);
   const [stats, setStats] = useState<CityStats>({ money: INITIAL_MONEY, population: 0, day: 1, grammarScore: 0 });
   const [selectedTool, setSelectedTool] = useState<string>(BuildingType.Road);
+  const [weather, setWeather] = useState<'sunny' | 'rainy'>('sunny');
   
   // --- AI State ---
   const [currentGoal, setCurrentGoal] = useState<AIGoal | null>(null);
@@ -189,6 +191,11 @@ function App() {
 
         return newStats;
       });
+      
+      // Weather Change (5% chance to toggle)
+      if (Math.random() < 0.05) {
+        setWeather(prev => prev === 'sunny' ? 'rainy' : 'sunny');
+      }
 
       // Natural Disasters
       if (Math.random() < 0.01) { // 1% chance per tick
@@ -353,6 +360,7 @@ function App() {
         onTileClick={handleTileClick} 
         hoveredTool={selectedTool}
         population={stats.population}
+        weather={weather}
       />
       
       {!gameStarted && (
