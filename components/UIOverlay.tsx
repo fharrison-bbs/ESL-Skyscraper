@@ -3,8 +3,8 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import React, { useEffect, useRef } from 'react';
-import { BuildingType, CityStats, AIGoal, NewsItem, TOOL_UPGRADE } from '../types';
+import React, { useEffect, useRef, useState } from 'react';
+import { BuildingType, CityStats, AIGoal, NewsItem, TOOL_UPGRADE, BuildingConfig } from '../types';
 import { BUILDINGS, UPGRADE_COST_MULTIPLIER } from '../constants';
 
 interface UIOverlayProps {
@@ -16,22 +16,14 @@ interface UIOverlayProps {
   onClaimReward: () => void;
   isGeneratingGoal: boolean;
   aiEnabled: boolean;
-  onOpenQuiz: () => void;
+  onOpenQuiz: (topic?: string) => void;
 }
 
-const tools = [
-  BuildingType.None, // Bulldoze
-  TOOL_UPGRADE,
-  BuildingType.Road,
-  BuildingType.Residential,
-  BuildingType.Commercial,
-  BuildingType.Industrial,
-  BuildingType.Park,
-  BuildingType.School,
-  BuildingType.PowerPlant,
-  BuildingType.Hospital,
-  BuildingType.PoliceStation,
-];
+const CATEGORIES = {
+  "Infrastructure": [BuildingType.Road, BuildingType.Aqueduct, BuildingType.None, TOOL_UPGRADE],
+  "Civilian": [BuildingType.Domus, BuildingType.Insula, BuildingType.Market, BuildingType.Works],
+  "Grammar": [BuildingType.Forum, BuildingType.Baths, BuildingType.Colosseum, BuildingType.Senate],
+};
 
 const ToolButton: React.FC<{
   type: string;
@@ -49,42 +41,67 @@ const ToolButton: React.FC<{
   let disabled = false;
 
   if (isUpgrade) {
-    label = 'UPGRADE';
-    color = '#c084fc';
+    label = 'RENOVATE';
+    color = '#a855f7';
     costText = `x${UPGRADE_COST_MULTIPLIER}`;
   } else {
     config = BUILDINGS[type as BuildingType];
     label = config.name;
     color = config.color;
-    costText = config.cost > 0 ? `$${config.cost}` : '';
+    costText = config.cost > 0 ? `${config.cost} Dn.` : '';
     disabled = !isBulldoze && money < config.cost;
   }
   
-  // Use 3D color for preview
-  const bgColor = isBulldoze || isUpgrade ? 'transparent' : color;
-
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       className={`
-        relative flex flex-col items-center justify-center rounded-lg border-2 transition-all shadow-lg backdrop-blur-sm flex-shrink-0
-        w-14 h-14 md:w-16 md:h-16
-        ${isSelected ? 'border-white bg-white/20 scale-110 z-10' : 'border-gray-600 bg-gray-900/80 hover:bg-gray-800'}
-        ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+        relative flex flex-col items-center justify-center rounded-md border-2 transition-all shadow-md
+        w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24
+        ${isSelected ? 'border-yellow-400 bg-stone-800 scale-105 z-10' : 'border-stone-600 bg-stone-900/90 hover:bg-stone-800'}
+        ${disabled ? 'opacity-50 grayscale' : 'cursor-pointer'}
       `}
     >
-      <div className="w-6 h-6 md:w-8 md:h-8 rounded mb-0.5 md:mb-1 border border-black/30 shadow-inner flex items-center justify-center overflow-hidden" style={{ backgroundColor: bgColor }}>
-        {isBulldoze && <div className="w-full h-full bg-red-600 text-white flex justify-center items-center font-bold text-base md:text-lg">✕</div>}
-        {isUpgrade && <div className="w-full h-full bg-purple-600 text-white flex justify-center items-center font-bold text-base md:text-lg">⬆</div>}
-        {type === BuildingType.Road && <div className="w-full h-2 bg-gray-800 transform -rotate-45"></div>}
+      <div className="w-8 h-8 md:w-10 md:h-10 rounded-sm mb-1 shadow-inner flex items-center justify-center border border-black/50" style={{ backgroundColor: color }}>
+        {isBulldoze && <span className="text-white text-xl font-bold">✕</span>}
+        {isUpgrade && <span className="text-white text-xl font-bold">⬆</span>}
       </div>
-      <span className="text-[8px] md:text-[9px] font-bold text-white uppercase tracking-wider drop-shadow-md leading-none text-center px-1">{label}</span>
+      <span className="text-[10px] md:text-xs font-serif font-bold text-stone-200 uppercase tracking-widest text-center px-1 leading-none">{label}</span>
       {costText && (
-        <span className={`text-[8px] md:text-[9px] font-mono leading-none ${disabled ? 'text-red-400' : 'text-green-300'}`}>{costText}</span>
+        <span className={`text-[9px] md:text-[10px] font-mono mt-1 ${disabled ? 'text-red-400' : 'text-yellow-400'}`}>{costText}</span>
       )}
     </button>
   );
+};
+
+const GuideButton = ({ category }: { category: string }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    
+    // Determine content based on category
+    let content = "";
+    if (category === "Grammar") content = "These buildings unlock specific grammar training. Forum = Past Simple. Baths = Past Continuous. Senate = Subordinate Clauses.";
+    else if (category === "Civilian") content = "Homes (Domus/Insula) increase citizens. Markets and Works generate Denarii.";
+    else content = "Roads connect your city. Aqueducts provide beauty. Renovate to improve output.";
+
+    return (
+        <div className="relative inline-block ml-2">
+            <button 
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-6 h-6 rounded-full bg-yellow-600 text-white font-serif font-bold flex items-center justify-center text-xs hover:bg-yellow-500 shadow-sm border border-yellow-400"
+            >
+                ?
+            </button>
+            {isOpen && (
+                <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)}></div>
+                <div className="absolute bottom-full left-0 mb-2 w-48 md:w-64 bg-stone-100 text-stone-900 p-3 rounded border-2 border-yellow-600 shadow-xl z-50 text-xs md:text-sm font-serif">
+                    <p>{content}</p>
+                </div>
+                </>
+            )}
+        </div>
+    );
 };
 
 const UIOverlay: React.FC<UIOverlayProps> = ({
@@ -99,8 +116,8 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
   onOpenQuiz
 }) => {
   const newsRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState("Civilian");
 
-  // Auto-scroll news
   useEffect(() => {
     if (newsRef.current) {
       newsRef.current.scrollTop = newsRef.current.scrollHeight;
@@ -108,143 +125,110 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
   }, [newsFeed]);
 
   return (
-    <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-2 md:p-4 font-sans z-10">
+    <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-2 md:p-6 font-serif z-10 text-stone-100">
       
-      {/* Top Bar: Stats & Goal */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-start pointer-events-auto gap-2 w-full max-w-full">
+      {/* Top Bar */}
+      <div className="flex flex-col md:flex-row justify-between items-start pointer-events-auto gap-4 w-full">
         
-        {/* Stats */}
-        <div className="bg-gray-900/90 text-white p-2 md:p-3 rounded-xl border border-gray-700 shadow-2xl backdrop-blur-md flex gap-3 md:gap-6 items-center justify-between md:justify-start w-full md:w-auto">
-          <div className="flex flex-col">
-            <span className="text-[8px] md:text-[10px] text-gray-400 uppercase font-bold tracking-widest">Treasury</span>
-            <span className="text-lg md:text-2xl font-black text-green-400 font-mono drop-shadow-md">${stats.money.toLocaleString()}</span>
-          </div>
-          <div className="w-px h-6 md:h-8 bg-gray-700"></div>
-          <div className="flex flex-col">
-            <span className="text-[8px] md:text-[10px] text-gray-400 uppercase font-bold tracking-widest">Citizens</span>
-            <span className="text-base md:text-xl font-bold text-blue-300 font-mono drop-shadow-md">{stats.population.toLocaleString()}</span>
-          </div>
-          <div className="w-px h-6 md:h-8 bg-gray-700"></div>
-          
-          {/* Quiz Button - Major Call to Action */}
-          <button 
-             onClick={onOpenQuiz}
-             className="flex flex-col items-center bg-gradient-to-br from-indigo-600 to-purple-700 hover:from-indigo-500 hover:to-purple-600 px-3 py-1 rounded-lg border border-indigo-400 shadow-lg animate-pulse hover:animate-none transition-transform active:scale-95"
-          >
-             <span className="text-[8px] md:text-[10px] text-indigo-100 uppercase font-bold tracking-widest">Work Shift</span>
-             <span className="text-sm md:text-lg font-bold text-white flex gap-1 items-center">
-                <span>Earn 💵</span>
-             </span>
-          </button>
+        {/* Resource Display */}
+        <div className="bg-stone-900/95 border-2 border-stone-600 rounded-lg p-3 md:p-4 shadow-2xl flex gap-6 items-center">
+            <div className="text-center">
+                <div className="text-[10px] uppercase text-stone-400 tracking-[0.2em] mb-1">Denarii</div>
+                <div className="text-xl md:text-2xl font-bold text-yellow-500">{stats.money.toLocaleString()}</div>
+            </div>
+            <div className="w-px h-8 bg-stone-700"></div>
+            <div className="text-center">
+                <div className="text-[10px] uppercase text-stone-400 tracking-[0.2em] mb-1">Citizens</div>
+                <div className="text-xl md:text-2xl font-bold text-stone-300">{stats.population.toLocaleString()}</div>
+            </div>
+            
+            <button 
+                onClick={() => onOpenQuiz()}
+                className="ml-4 bg-gradient-to-b from-red-700 to-red-900 hover:from-red-600 hover:to-red-800 text-white border-2 border-red-500 rounded px-4 py-2 shadow-[0_4px_0_rgb(69,10,10)] active:shadow-none active:translate-y-[4px] transition-all"
+            >
+                <div className="text-[10px] uppercase tracking-widest opacity-80">Perform Duty</div>
+                <div className="font-bold flex items-center gap-2">
+                    <span>Earn Denarii</span>
+                </div>
+            </button>
         </div>
 
-        {/* AI Goal Panel */}
-        <div className={`w-full md:w-80 bg-indigo-900/90 text-white rounded-xl border-2 border-indigo-500/50 shadow-[0_0_20px_rgba(99,102,241,0.4)] backdrop-blur-md overflow-hidden transition-all ${!aiEnabled ? 'opacity-80 grayscale-[0.5]' : ''}`}>
-          <div className="bg-indigo-800/80 px-3 md:px-4 py-1.5 md:py-2 flex justify-between items-center border-b border-indigo-600">
-            <span className="font-bold uppercase text-[10px] md:text-xs tracking-widest flex items-center gap-2 shadow-sm">
-              {aiEnabled ? (
-                <>
-                  <span className={`w-2 h-2 rounded-full ${isGeneratingGoal ? 'bg-yellow-400 animate-ping' : 'bg-cyan-400 animate-pulse'}`}></span>
-                  AI Advisor
-                </>
-              ) : (
-                <>
-                  <span className="w-2 h-2 rounded-full bg-green-400"></span>
-                  Sandbox
-                </>
-              )}
-            </span>
-            {isGeneratingGoal && aiEnabled && <span className="text-[10px] animate-pulse text-yellow-300 font-mono">Thinking...</span>}
-          </div>
-          
-          <div className="p-3 md:p-4">
-            {aiEnabled ? (
-              currentGoal ? (
-                <>
-                  <p className="text-xs md:text-sm font-medium text-indigo-100 mb-2 md:mb-3 leading-tight drop-shadow">"{currentGoal.description}"</p>
-                  
-                  <div className="flex justify-between items-center mt-1 md:mt-2 bg-indigo-950/60 p-1.5 md:p-2 rounded-lg border border-indigo-700/50">
-                    <div className="text-[10px] md:text-xs text-gray-300">
-                      Goal: <span className="font-mono font-bold text-white">
-                        {currentGoal.targetType === 'building_count' ? BUILDINGS[currentGoal.buildingType!].name : 
-                         currentGoal.targetType === 'money' ? '$' : 'Pop.'} {currentGoal.targetValue}
-                      </span>
+        {/* Quest / Goal */}
+        <div className="bg-stone-900/95 border-2 border-purple-900 rounded-lg p-3 md:p-4 shadow-2xl w-full md:w-80 relative overflow-hidden">
+             {/* Decorative Laurel */}
+             <div className="absolute -right-4 -top-4 text-purple-900/20 text-9xl">🌿</div>
+             
+             <div className="flex justify-between items-center mb-2">
+                 <span className="text-[10px] uppercase tracking-widest text-purple-400 font-bold">Senate Decree</span>
+                 {isGeneratingGoal && <span className="text-[10px] animate-pulse">Consulting Oracles...</span>}
+             </div>
+             
+             {currentGoal ? (
+                 <>
+                    <p className="text-sm italic text-stone-300 mb-3">"{currentGoal.description}"</p>
+                    <div className="flex justify-between items-center text-xs">
+                        <span className="text-stone-400">Target: {currentGoal.targetType === 'money' ? 'Denarii' : 'Pop.'} {currentGoal.targetValue}</span>
+                        <span className="text-yellow-500 font-bold">Reward: {currentGoal.reward} Dn.</span>
                     </div>
-                    <div className="text-[10px] md:text-xs text-yellow-300 font-bold font-mono bg-yellow-900/50 px-2 py-0.5 rounded border border-yellow-600/50">
-                      +${currentGoal.reward}
-                    </div>
-                  </div>
-  
-                  {currentGoal.completed && (
-                    <button
-                      onClick={onClaimReward}
-                      className="mt-2 md:mt-3 w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold py-1.5 md:py-2 px-4 rounded shadow-[0_0_15px_rgba(34,197,94,0.6)] transition-all animate-bounce text-xs md:text-sm uppercase tracking-wide border border-green-400/50"
-                    >
-                      Collect Reward
-                    </button>
-                  )}
-                </>
-              ) : (
-                <div className="text-xs md:text-sm text-gray-400 py-2 italic flex items-center gap-2">
-                  <svg className="animate-spin h-3 w-3 md:h-4 md:w-4 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Analyzing city data...
-                </div>
-              )
-            ) : (
-              <div className="text-xs md:text-sm text-indigo-200/70 py-1">
-                 <p className="mb-1">Free play active.</p>
-              </div>
-            )}
-          </div>
+                    {currentGoal.completed && (
+                        <button onClick={onClaimReward} className="mt-3 w-full bg-yellow-600 hover:bg-yellow-500 text-black font-bold py-2 rounded uppercase text-xs tracking-widest animate-bounce">
+                            Claim Bounty
+                        </button>
+                    )}
+                 </>
+             ) : (
+                 <div className="text-xs text-stone-500 italic">No active decree.</div>
+             )}
         </div>
       </div>
 
-      {/* Bottom Bar: Tools & News */}
-      <div className="flex flex-col-reverse md:flex-row md:justify-between md:items-end pointer-events-auto mt-auto gap-2 w-full max-w-full">
+      {/* Bottom Interface */}
+      <div className="flex flex-col-reverse lg:flex-row items-end justify-between pointer-events-auto mt-auto gap-4 w-full">
         
-        <div className="flex gap-1 md:gap-2 bg-gray-900/80 p-1 md:p-2 rounded-2xl border border-gray-600/50 backdrop-blur-xl shadow-2xl w-full md:w-auto overflow-x-auto no-scrollbar justify-start md:justify-start">
-          <div className="flex gap-1 md:gap-2 min-w-max px-1">
-            {tools.map((type) => (
-              <ToolButton
-                key={type}
-                type={type}
-                isSelected={selectedTool === type}
-                onClick={() => onSelectTool(type)}
-                money={stats.money}
-              />
-            ))}
-          </div>
-          <div className="text-[8px] text-gray-500 uppercase writing-mode-vertical flex items-center justify-center font-bold tracking-widest border-l border-gray-700 pl-1 ml-1 select-none">Build</div>
+        {/* Toolbelt */}
+        <div className="w-full lg:w-auto bg-stone-900/95 border-t-2 md:border-2 border-stone-600 rounded-t-xl md:rounded-xl shadow-2xl overflow-hidden flex flex-col">
+            {/* Tabs */}
+            <div className="flex bg-stone-950 border-b border-stone-700">
+                {Object.keys(CATEGORIES).map(cat => (
+                    <button 
+                        key={cat}
+                        onClick={() => setActiveTab(cat)}
+                        className={`flex-1 py-3 px-4 text-xs font-bold uppercase tracking-widest transition-colors ${activeTab === cat ? 'bg-stone-800 text-yellow-500 border-b-2 border-yellow-500' : 'text-stone-500 hover:text-stone-300'}`}
+                    >
+                        {cat}
+                    </button>
+                ))}
+            </div>
+            
+            {/* Icons */}
+            <div className="p-3 md:p-4 flex items-center gap-2 overflow-x-auto">
+                <div className="flex gap-2 min-w-max mx-auto">
+                    {CATEGORIES[activeTab as keyof typeof CATEGORIES].map((type) => (
+                        <ToolButton
+                            key={type}
+                            type={type}
+                            isSelected={selectedTool === type}
+                            onClick={() => onSelectTool(type)}
+                            money={stats.money}
+                        />
+                    ))}
+                </div>
+                <GuideButton category={activeTab} />
+            </div>
         </div>
 
-        {/* News Feed */}
-        <div className="w-full md:w-80 h-32 md:h-48 bg-black/80 text-white rounded-xl border border-gray-700/80 backdrop-blur-xl shadow-2xl flex flex-col overflow-hidden relative">
-          <div className="bg-gray-800/90 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-300 border-b border-gray-600 flex justify-between items-center">
-            <span>City Feed</span>
-            <span className={`w-1.5 h-1.5 rounded-full ${aiEnabled ? 'bg-red-500 animate-pulse' : 'bg-gray-500'}`}></span>
-          </div>
-          
-          <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_bottom,rgba(255,255,255,0)_50%,rgba(0,0,0,0.1)_50%)] bg-[length:100%_4px] opacity-30 z-20"></div>
-          
-          <div ref={newsRef} className="flex-1 overflow-y-auto p-2 md:p-3 space-y-2 text-[10px] md:text-xs font-mono scroll-smooth mask-image-b z-10">
-            {newsFeed.length === 0 && <div className="text-gray-500 italic text-center mt-10">No active news stream.</div>}
-            {newsFeed.map((news) => (
-              <div key={news.id} className={`
-                border-l-2 pl-2 py-1 transition-all animate-fade-in leading-tight relative
-                ${news.type === 'positive' ? 'border-green-500 text-green-200 bg-green-900/20' : ''}
-                ${news.type === 'negative' ? 'border-red-500 text-red-200 bg-red-900/20' : ''}
-                ${news.type === 'neutral' ? 'border-blue-400 text-blue-100 bg-blue-900/20' : ''}
-              `}>
-                <span className="opacity-70 text-[8px] absolute top-0.5 right-1">{new Date(Number(news.id.split('.')[0])).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                {news.text}
-              </div>
-            ))}
-          </div>
+        {/* News Scroll */}
+        <div className="hidden md:flex flex-col w-64 bg-stone-900/80 border-2 border-stone-700 rounded-lg p-3 backdrop-blur-md">
+            <div className="text-[10px] uppercase text-stone-500 tracking-widest mb-2 border-b border-stone-700 pb-1">Forum News</div>
+            <div ref={newsRef} className="h-32 overflow-y-auto font-serif text-xs space-y-2 text-stone-300">
+                {newsFeed.length === 0 && <span className="opacity-50 italic">The city is quiet...</span>}
+                {newsFeed.map(news => (
+                    <div key={news.id} className={`border-l-2 pl-2 ${news.type === 'negative' ? 'border-red-800' : 'border-green-800'}`}>
+                        {news.text}
+                    </div>
+                ))}
+            </div>
         </div>
-
       </div>
     </div>
   );

@@ -4,36 +4,37 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 export enum BuildingType {
-  None = 'None', // Acts as Bulldoze
-  Road = 'Road',
-  Residential = 'Residential',
-  Commercial = 'Commercial',
-  Industrial = 'Industrial',
-  Park = 'Park',
-  School = 'School',
-  PowerPlant = 'PowerPlant',
-  Hospital = 'Hospital',
-  PoliceStation = 'PoliceStation',
+  None = 'None', // Acts as Demolish
+  Road = 'Road', // Via
+  Domus = 'Domus', // Residential (Low)
+  Insula = 'Insula', // Residential (High)
+  Market = 'Market', // Commercial
+  Works = 'Works', // Industrial
+  Forum = 'Forum', // Past Simple Hub
+  Baths = 'Baths', // Past Continuous Hub
+  Colosseum = 'Colosseum', // Mixed Practice
+  Senate = 'Senate', // Subordinate Clauses
+  Aqueduct = 'Aqueduct', // Decorative/Infrastructure
 }
 
-export const TOOL_UPGRADE = 'Upgrade'; // Special tool identifier
+export const TOOL_UPGRADE = 'Upgrade'; // Renovate
 
 export interface BuildingConfig {
   type: BuildingType;
   cost: number;
   name: string;
   description: string;
-  color: string; // Main color for 3D material
-  popGen: number; // Population generation per tick
-  incomeGen: number; // Money generation per tick
+  color: string; // UI Color
+  popGen: number; // Citizens
+  incomeGen: number; // Denarii
+  grammarTopic?: string; // The grammar rule this building represents
+  guideText?: string; // Explanation for the ? button
 }
 
 export interface TileData {
   x: number;
   y: number;
   buildingType: BuildingType;
-  // Suggested by AI for visual variety later
-  variant?: number;
   level: number;
   damaged?: boolean;
 }
@@ -41,17 +42,17 @@ export interface TileData {
 export type Grid = TileData[][];
 
 export interface CityStats {
-  money: number;
-  population: number;
+  money: number; // Denarii
+  population: number; // Citizens
   day: number;
-  grammarScore: number; // New stat tracking correct answers
+  grammarScore: number;
 }
 
 export interface AIGoal {
   description: string;
   targetType: 'population' | 'money' | 'building_count';
   targetValue: number;
-  buildingType?: BuildingType; // If target is building_count
+  buildingType?: BuildingType;
   reward: number;
   completed: boolean;
 }

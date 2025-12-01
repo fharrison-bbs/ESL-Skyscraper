@@ -12,18 +12,11 @@ import StartScreen from './components/StartScreen';
 import QuizModal from './components/QuizModal';
 import { generateCityGoal, generateNewsEvent, generateESLQuestion } from './services/geminiService';
 
-// Initialize empty grid with island shape generation for 3D visual interest
 const createInitialGrid = (): Grid => {
   const grid: Grid = [];
-  const center = GRID_SIZE / 2;
-  // const radius = GRID_SIZE / 2 - 1;
-
   for (let y = 0; y < GRID_SIZE; y++) {
     const row: TileData[] = [];
     for (let x = 0; x < GRID_SIZE; x++) {
-      // Simple circle crop for island look
-      // const dist = Math.sqrt((x-center)*(x-center) + (y-center)*(y-center));
-      
       row.push({ x, y, buildingType: BuildingType.None, level: 1, damaged: false });
     }
     grid.push(row);
@@ -32,7 +25,6 @@ const createInitialGrid = (): Grid => {
 };
 
 function App() {
-  // --- Game State ---
   const [gameStarted, setGameStarted] = useState(false);
   const [aiEnabled, setAiEnabled] = useState(true);
 
@@ -41,32 +33,26 @@ function App() {
   const [selectedTool, setSelectedTool] = useState<string>(BuildingType.Road);
   const [weather, setWeather] = useState<'sunny' | 'rainy'>('sunny');
   
-  // --- AI State ---
   const [currentGoal, setCurrentGoal] = useState<AIGoal | null>(null);
   const [isGeneratingGoal, setIsGeneratingGoal] = useState(false);
   const [newsFeed, setNewsFeed] = useState<NewsItem[]>([]);
   
-  // --- Quiz State ---
   const [showQuiz, setShowQuiz] = useState(false);
   const [quizQuestion, setQuizQuestion] = useState<QuizQuestion | null>(null);
   const [quizLoading, setQuizLoading] = useState(false);
 
-  // Refs for accessing state inside intervals without dependencies
   const gridRef = useRef(grid);
   const statsRef = useRef(stats);
   const goalRef = useRef(currentGoal);
   const aiEnabledRef = useRef(aiEnabled);
 
-  // Sync refs
   useEffect(() => { gridRef.current = grid; }, [grid]);
   useEffect(() => { statsRef.current = stats; }, [stats]);
   useEffect(() => { goalRef.current = currentGoal; }, [currentGoal]);
   useEffect(() => { aiEnabledRef.current = aiEnabled; }, [aiEnabled]);
 
-  // --- AI Logic Wrappers ---
-
   const addNewsItem = useCallback((item: NewsItem) => {
-    setNewsFeed(prev => [...prev.slice(-12), item]); // Keep last few
+    setNewsFeed(prev => [...prev.slice(-12), item]); 
   }, []);
 
   const fetchNewGoal = useCallback(async () => {
@@ -78,26 +64,30 @@ function App() {
     if (newGoal) {
       setCurrentGoal(newGoal);
     } else {
-      // If failed (likely rate limit), wait longer: 30s instead of 5s
       if(aiEnabledRef.current) setTimeout(fetchNewGoal, 30000); 
     }
     setIsGeneratingGoal(false);
   }, [isGeneratingGoal]); 
 
   const fetchNews = useCallback(async () => {
-    // chance to fetch news per tick (2 seconds)
-    // Previous was 0.15 (15%), which is ~4.5 calls/min. 
-    // Reduced to 0.02 (2%) -> ~0.6 calls/min to respect Rate Limits (15 RPM on free tier usually shared)
     if (!aiEnabledRef.current || Math.random() > 0.02) return; 
     const news = await generateNewsEvent(statsRef.current, null);
     if (news) addNewsItem(news);
   }, [addNewsItem]);
 
-  const handleOpenQuiz = async () => {
+  const handleOpenQuiz = async (specificTopic?: string) => {
     setShowQuiz(true);
     setQuizLoading(true);
     setQuizQuestion(null);
-    const q = await generateESLQuestion(['Past Simple', 'Past Continuous', 'Subordinate Clauses']);
+    
+    // If no specific topic (clicking "Perform Duty"), pick random from available buildings
+    let topic = specificTopic;
+    if (!topic) {
+        const topics = ['Past Simple', 'Past Continuous', 'Subordinate Clauses', 'Past Simple vs Continuous'];
+        topic = topics[Math.floor(Math.random() * topics.length)];
+    }
+
+    const q = await generateESLQuestion(topic);
     setQuizQuestion(q);
     setQuizLoading(false);
   };
@@ -105,33 +95,30 @@ function App() {
   const handleQuizAnswer = (correct: boolean) => {
     setShowQuiz(false);
     if (correct) {
-      // Calculate reward based on number of schools
-      let schoolCount = 0;
-      gridRef.current.flat().forEach(t => { if (t.buildingType === BuildingType.School) schoolCount++; });
-      const multiplier = 1 + (schoolCount * 0.5);
-      const reward = Math.round(QUIZ_REWARD_BASE * multiplier);
+      // Reward calculation: Base + Bonus for having a Senate or Forum
+      let bonus = 1;
+      gridRef.current.flat().forEach(t => { 
+          if (t.buildingType === BuildingType.Forum || t.buildingType === BuildingType.Senate) bonus += 0.2; 
+      });
+      const reward = Math.round(QUIZ_REWARD_BASE * bonus);
       
       setStats(prev => ({ 
         ...prev, 
         money: prev.money + reward,
         grammarScore: prev.grammarScore + 1
       }));
-      addNewsItem({ id: Date.now().toString(), text: `Task completed! Earned $${reward}.`, type: 'positive' });
+      addNewsItem({ id: Date.now().toString(), text: `Grammar Approved! +${reward} Denarii.`, type: 'positive' });
     } else {
-       addNewsItem({ id: Date.now().toString(), text: `Paperwork rejected. No funds awarded.`, type: 'negative' });
+       addNewsItem({ id: Date.now().toString(), text: `Inaccurate Latin translation. No Denarii.`, type: 'negative' });
     }
   };
 
-  // --- Initial Setup ---
   useEffect(() => {
     if (!gameStarted) return;
-    addNewsItem({ id: Date.now().toString(), text: "Welcome. Build schools to increase contract rewards.", type: 'positive' });
+    addNewsItem({ id: Date.now().toString(), text: "Ave! Build a Forum to begin political life.", type: 'positive' });
     if (aiEnabled) fetchNewGoal();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameStarted]);
 
-
-  // --- Game Loop ---
   useEffect(() => {
     if (!gameStarted) return;
 
@@ -143,8 +130,6 @@ function App() {
       gridRef.current.flat().forEach(tile => {
         if (tile.buildingType !== BuildingType.None) {
           const config = BUILDINGS[tile.buildingType];
-          
-          // Levels boost stats. Damage halts production.
           const multiplier = tile.damaged ? 0 : tile.level;
           
           dailyIncome += config.incomeGen * multiplier;
@@ -153,21 +138,13 @@ function App() {
         }
       });
 
-      // Special interactions
-      if (buildingCounts[BuildingType.PowerPlant] > 0) {
-        // Boost industrial income by 50% for each power plant
-        const indIncome = (buildingCounts[BuildingType.Industrial] || 0) * BUILDINGS[BuildingType.Industrial].incomeGen;
-        // The loop already added base income. We add the bonus here.
-      }
-
-      const resCount = buildingCounts[BuildingType.Residential] || 0;
-      const maxPop = resCount * 50; 
+      const resCount = (buildingCounts[BuildingType.Domus] || 0) + (buildingCounts[BuildingType.Insula] || 0);
+      const maxPop = resCount * 100; 
 
       setStats(prev => {
         let newPop = prev.population + dailyPopGrowth;
         if (newPop > maxPop) newPop = maxPop;
-        if (resCount === 0 && prev.population > 0) newPop = Math.max(0, prev.population - 5);
-
+        
         const newStats = {
           ...prev,
           money: prev.money + dailyIncome,
@@ -192,65 +169,9 @@ function App() {
         return newStats;
       });
       
-      // Weather Change (5% chance to toggle)
       if (Math.random() < 0.05) {
         setWeather(prev => prev === 'sunny' ? 'rainy' : 'sunny');
       }
-
-      // Natural Disasters
-      if (Math.random() < 0.01) { // 1% chance per tick
-        const occupiedTiles = gridRef.current.flat().filter(t => t.buildingType !== BuildingType.None && t.buildingType !== BuildingType.Road);
-        
-        if (occupiedTiles.length > 0) {
-            const rand = Math.random();
-            let disasterType = 'Fire';
-            if (rand > 0.6) disasterType = 'Meteor';
-            if (rand > 0.8) disasterType = 'Earthquake';
-            
-            const centerTile = occupiedTiles[Math.floor(Math.random() * occupiedTiles.length)];
-
-            if (disasterType === 'Fire') {
-                addNewsItem({id: Date.now().toString(), text: `🔥 Fire reported at a ${BUILDINGS[centerTile.buildingType].name}!`, type: 'negative'});
-                 setGrid(prev => {
-                    const newGrid = prev.map(row => [...row]);
-                    newGrid[centerTile.y][centerTile.x] = { ...centerTile, damaged: true };
-                    return newGrid;
-                });
-            } else if (disasterType === 'Meteor') {
-                 addNewsItem({id: Date.now().toString(), text: `☄️ Meteor strike on a ${BUILDINGS[centerTile.buildingType].name}!`, type: 'negative'});
-                 setGrid(prev => {
-                    const newGrid = prev.map(row => [...row]);
-                    newGrid[centerTile.y][centerTile.x] = { ...centerTile, buildingType: BuildingType.None, level: 1, damaged: false };
-                    return newGrid;
-                });
-            } else if (disasterType === 'Earthquake') {
-                 addNewsItem({id: Date.now().toString(), text: `📉 Earthquake hitting the district!`, type: 'negative'});
-                 setGrid(prev => {
-                    const newGrid = prev.map(row => [...row]);
-                    // Affect 3x3 area
-                    for (let dy = -1; dy <= 1; dy++) {
-                        for (let dx = -1; dx <= 1; dx++) {
-                            const ny = centerTile.y + dy;
-                            const nx = centerTile.x + dx;
-                            if (ny >= 0 && ny < GRID_SIZE && nx >= 0 && nx < GRID_SIZE) {
-                                const tile = newGrid[ny][nx];
-                                if (tile.buildingType !== BuildingType.None && tile.buildingType !== BuildingType.Road) {
-                                    // 70% chance to damage, 10% chance to destroy
-                                    const damageRoll = Math.random();
-                                    if (damageRoll < 0.1) {
-                                         newGrid[ny][nx] = { ...tile, buildingType: BuildingType.None, level: 1, damaged: false };
-                                    } else if (damageRoll < 0.8) {
-                                         newGrid[ny][nx] = { ...tile, damaged: true };
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    return newGrid;
-                });
-            }
-        }
-    }
 
       fetchNews();
 
@@ -258,9 +179,6 @@ function App() {
 
     return () => clearInterval(intervalId);
   }, [fetchNews, gameStarted]);
-
-
-  // --- Interaction Logic ---
 
   const handleTileClick = useCallback((x: number, y: number) => {
     if (!gameStarted) return;
@@ -273,7 +191,16 @@ function App() {
 
     const currentTile = currentGrid[y][x];
 
-    // Bulldoze
+    // Interaction with existing building (Perform Duty specific to that building)
+    if (currentTile.buildingType !== BuildingType.None && currentTile.buildingType !== BuildingType.Road && tool !== BuildingType.None && tool !== TOOL_UPGRADE) {
+        // If clicking a grammar building, open specific quiz
+        const config = BUILDINGS[currentTile.buildingType];
+        if (config.grammarTopic) {
+            handleOpenQuiz(config.grammarTopic);
+            return;
+        }
+    }
+
     if (tool === BuildingType.None) {
       if (currentTile.buildingType !== BuildingType.None) {
         const demolishCost = 5;
@@ -282,19 +209,14 @@ function App() {
             newGrid[y][x] = { ...currentTile, buildingType: BuildingType.None, level: 1, damaged: false };
             setGrid(newGrid);
             setStats(prev => ({ ...prev, money: prev.money - demolishCost }));
-        } else {
-            addNewsItem({id: Date.now().toString(), text: "Cannot afford demolition costs.", type: 'negative'});
         }
       }
       return;
     }
 
-    // Upgrade / Repair
     if (tool === TOOL_UPGRADE) {
       if (currentTile.buildingType !== BuildingType.None && currentTile.buildingType !== BuildingType.Road) {
         const config = BUILDINGS[currentTile.buildingType];
-        
-        // If damaged, cost is 50% of base cost to repair. If fine, cost is upgrade logic.
         let action = 'upgrade';
         let cost = 0;
 
@@ -307,24 +229,21 @@ function App() {
         
         if (currentStats.money >= cost) {
           const newGrid = currentGrid.map(row => [...row]);
-          
           if (action === 'repair') {
-             newGrid[y][x] = { ...currentTile, damaged: false }; // Just repair
-             addNewsItem({id: Date.now().toString(), text: `Repaired ${config.name}.`, type: 'positive'});
+             newGrid[y][x] = { ...currentTile, damaged: false };
+             addNewsItem({id: Date.now().toString(), text: `Restored ${config.name}.`, type: 'positive'});
           } else {
              newGrid[y][x] = { ...currentTile, level: currentTile.level + 1 };
           }
-          
           setGrid(newGrid);
           setStats(prev => ({ ...prev, money: prev.money - cost }));
         } else {
-          addNewsItem({id: Date.now().toString(), text: `Need $${cost} to ${action}.`, type: 'negative'});
+          addNewsItem({id: Date.now().toString(), text: `Need ${cost} Denarii.`, type: 'negative'});
         }
       }
       return;
     }
 
-    // Placement
     if (currentTile.buildingType === BuildingType.None) {
       const buildingConfig = BUILDINGS[tool as BuildingType];
       if (currentStats.money >= buildingConfig.cost) {
@@ -334,7 +253,7 @@ function App() {
         newGrid[y][x] = { ...currentTile, buildingType: tool as BuildingType, level: 1, damaged: false };
         setGrid(newGrid);
       } else {
-        addNewsItem({id: Date.now().toString() + Math.random(), text: `Treasury insufficient for ${buildingConfig.name}.`, type: 'negative'});
+        addNewsItem({id: Date.now().toString(), text: `Treasury Insufficient for ${buildingConfig.name}.`, type: 'negative'});
       }
     }
   }, [selectedTool, addNewsItem, gameStarted]);
@@ -342,7 +261,7 @@ function App() {
   const handleClaimReward = () => {
     if (currentGoal && currentGoal.completed) {
       setStats(prev => ({ ...prev, money: prev.money + currentGoal.reward }));
-      addNewsItem({id: Date.now().toString(), text: `Goal achieved! Reward claimed.`, type: 'positive'});
+      addNewsItem({id: Date.now().toString(), text: `Goal achieved! Bounty claimed.`, type: 'positive'});
       setCurrentGoal(null);
       fetchNewGoal();
     }
@@ -354,7 +273,7 @@ function App() {
   };
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden selection:bg-transparent selection:text-transparent bg-sky-900">
+    <div className="relative w-screen h-screen overflow-hidden selection:bg-transparent selection:text-transparent bg-[#0f172a]">
       <IsoMap 
         grid={grid} 
         onTileClick={handleTileClick} 
@@ -389,17 +308,6 @@ function App() {
            onClose={() => setShowQuiz(false)} 
         />
       )}
-
-      <style>{`
-        @keyframes fade-in { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
-        .animate-fade-in { animation: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .mask-image-b { -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%); mask-image: linear-gradient(to bottom, transparent 0%, black 15%); }
-        .writing-mode-vertical { writing-mode: vertical-rl; text-orientation: mixed; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
-      `}</style>
     </div>
   );
 }

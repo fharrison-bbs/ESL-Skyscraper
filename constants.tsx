@@ -9,100 +9,117 @@ import { BuildingConfig, BuildingType } from './types';
 export const GRID_SIZE = 15;
 
 // Game Settings
-export const TICK_RATE_MS = 2000; // Game loop updates every 2 seconds
-export const INITIAL_MONEY = 500; // Reduced to encourage quiz participation
-export const QUIZ_REWARD_BASE = 150;
+export const TICK_RATE_MS = 2000;
+export const INITIAL_MONEY = 800; // Denarii
+export const QUIZ_REWARD_BASE = 200;
 export const UPGRADE_COST_MULTIPLIER = 1.5;
 
 export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
   [BuildingType.None]: {
     type: BuildingType.None,
     cost: 0,
-    name: 'Bulldoze',
-    description: 'Clear a tile ($5)',
-    color: '#ef4444', // Used for UI
+    name: 'Demolish',
+    description: 'Clear land (5 Denarii)',
+    color: '#ef4444', 
     popGen: 0,
     incomeGen: 0,
   },
   [BuildingType.Road]: {
     type: BuildingType.Road,
     cost: 10,
-    name: 'Road',
-    description: 'Connects buildings.',
-    color: '#374151', // gray-700
+    name: 'Via (Road)',
+    description: 'Cobblestone roads.',
+    color: '#78716c', // stone-500
     popGen: 0,
     incomeGen: 0,
   },
-  [BuildingType.Residential]: {
-    type: BuildingType.Residential,
+  [BuildingType.Domus]: {
+    type: BuildingType.Domus,
     cost: 100,
-    name: 'Res.',
-    description: '+5 Pop/day. Upgradeable.',
-    color: '#f87171', // red-400
+    name: 'Domus',
+    description: 'Private home. +5 Citizens.',
+    color: '#f87171',
     popGen: 5,
     incomeGen: 0,
   },
-  [BuildingType.Commercial]: {
-    type: BuildingType.Commercial,
+  [BuildingType.Insula]: {
+    type: BuildingType.Insula,
     cost: 200,
-    name: 'Com.',
-    description: '+$15/day. Upgradeable.',
-    color: '#60a5fa', // blue-400
-    popGen: 0,
-    incomeGen: 15,
-  },
-  [BuildingType.Industrial]: {
-    type: BuildingType.Industrial,
-    cost: 400,
-    name: 'Ind.',
-    description: '+$40/day. Pollutes.',
-    color: '#facc15', // yellow-400
-    popGen: 0,
-    incomeGen: 40,
-  },
-  [BuildingType.Park]: {
-    type: BuildingType.Park,
-    cost: 50,
-    name: 'Park',
-    description: 'Looks nice.',
-    color: '#4ade80', // green-400
-    popGen: 1,
-    incomeGen: 0,
-  },
-  [BuildingType.School]: {
-    type: BuildingType.School,
-    cost: 600,
-    name: 'School',
-    description: 'Boosts Quiz Rewards.',
-    color: '#c084fc', // purple-400
-    popGen: 2,
+    name: 'Insula',
+    description: 'Apartment block. +15 Citizens.',
+    color: '#fb923c',
+    popGen: 15,
     incomeGen: 5,
   },
-  [BuildingType.PowerPlant]: {
-    type: BuildingType.PowerPlant,
-    cost: 1000,
-    name: 'Power',
-    description: 'Boosts Industrial Output.',
-    color: '#ea580c', // orange-600
+  [BuildingType.Market]: {
+    type: BuildingType.Market,
+    cost: 250,
+    name: 'Market',
+    description: 'Trade goods. +20 Denarii.',
+    color: '#facc15',
     popGen: 0,
-    incomeGen: 100,
+    incomeGen: 20,
   },
-  [BuildingType.Hospital]: {
-    type: BuildingType.Hospital,
-    cost: 800,
-    name: 'Hospital',
-    description: 'Improves Public Health.',
-    color: '#f43f5e', // rose-500
-    popGen: 8,
+  [BuildingType.Works]: {
+    type: BuildingType.Works,
+    cost: 400,
+    name: 'Works',
+    description: 'Production. +45 Denarii.',
+    color: '#713f12', // bronze/brown
+    popGen: 0,
+    incomeGen: 45,
+  },
+  [BuildingType.Aqueduct]: {
+    type: BuildingType.Aqueduct,
+    cost: 150,
+    name: 'Aqueduct',
+    description: 'Water supply. Looks majestic.',
+    color: '#3b82f6',
+    popGen: 2,
     incomeGen: 0,
   },
-  [BuildingType.PoliceStation]: {
-    type: BuildingType.PoliceStation,
+  [BuildingType.Forum]: {
+    type: BuildingType.Forum,
+    cost: 600,
+    name: 'Forum',
+    description: 'Center of public life.',
+    color: '#e2e8f0', // marble
+    popGen: 5,
+    incomeGen: 10,
+    grammarTopic: 'Past Simple',
+    guideText: 'Use Past Simple for completed actions in the past. (e.g., "Caesar conquered Gaul.")',
+  },
+  [BuildingType.Baths]: {
+    type: BuildingType.Baths,
     cost: 800,
-    name: 'Police',
-    description: 'Improves Safety.',
-    color: '#1e3a8a', // blue-900
-    popGen: 2,
-    incomeGen: 20,
+    name: 'Baths',
+    description: 'Relaxation & hygiene.',
+    color: '#06b6d4', // cyan
+    popGen: 10,
+    incomeGen: 0,
+    grammarTopic: 'Past Continuous',
+    guideText: 'Use Past Continuous for actions in progress in the past. (e.g., "The citizens were bathing when...")',
+  },
+  [BuildingType.Colosseum]: {
+    type: BuildingType.Colosseum,
+    cost: 1500,
+    name: 'Colosseum',
+    description: 'Games & Spectacles.',
+    color: '#b91c1c', // red
+    popGen: 0,
+    incomeGen: 100,
+    grammarTopic: 'Past Simple vs Continuous',
+    guideText: 'Mix the tenses! Short action (Simple) interrupts long action (Continuous).',
+  },
+  [BuildingType.Senate]: {
+    type: BuildingType.Senate,
+    cost: 1200,
+    name: 'Senate',
+    description: 'Law & Order.',
+    color: '#7e22ce', // purple
+    popGen: 5,
+    incomeGen: 50,
+    grammarTopic: 'Subordinate Clauses',
+    guideText: 'Complex sentences with time, reason, or condition. (e.g., "Although it rained, the games continued.")',
   },
 };

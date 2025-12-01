@@ -1,3 +1,4 @@
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -17,49 +18,34 @@ const goalSchema = {
   properties: {
     description: {
       type: Type.STRING,
-      description: "A short, creative description of the goal from the perspective of city council or citizens.",
+      description: "A short goal from the Roman Senate or Emperor.",
     },
     targetType: {
       type: Type.STRING,
       enum: ['population', 'money', 'building_count'],
-      description: "The metric to track.",
     },
     targetValue: {
       type: Type.INTEGER,
-      description: "The target numeric value to reach.",
     },
     buildingType: {
       type: Type.STRING,
-      enum: [BuildingType.Residential, BuildingType.Commercial, BuildingType.Industrial, BuildingType.Park, BuildingType.Road, BuildingType.School, BuildingType.PowerPlant],
-      description: "Required if targetType is building_count.",
     },
     reward: {
       type: Type.INTEGER,
-      description: "Monetary reward for completion.",
     },
   },
   required: ['description', 'targetType', 'targetValue', 'reward'],
 };
 
 export const generateCityGoal = async (stats: CityStats, grid: Grid): Promise<AIGoal | null> => {
-  // Count buildings
-  const counts: Record<string, number> = {};
-  grid.flat().forEach(tile => {
-    counts[tile.buildingType] = (counts[tile.buildingType] || 0) + 1;
-  });
-
   const context = `
-    Current City Stats:
-    Day: ${stats.day}
-    Money: $${stats.money}
-    Population: ${stats.population}
-    Buildings: ${JSON.stringify(counts)}
-    Building Costs/Stats: ${JSON.stringify(
-      Object.values(BUILDINGS).filter(b => b.type !== BuildingType.None).map(b => ({type: b.type, cost: b.cost, pop: b.popGen, income: b.incomeGen}))
-    )}
+    Roman City Stats:
+    Year: ${stats.day} AUC
+    Denarii: ${stats.money}
+    Citizens: ${stats.population}
   `;
 
-  const prompt = `You are the AI City Advisor for a simulation game. Based on the current city stats, generate a challenging but achievable short-term goal for the player to help the city grow. Return JSON.`;
+  const prompt = `Generate a goal for a Roman Governor. Use Roman terminology (Denarii, Citizens, Senate). Return JSON.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -87,15 +73,15 @@ export const generateCityGoal = async (stats: CityStats, grid: Grid): Promise<AI
 const newsSchema = {
   type: Type.OBJECT,
   properties: {
-    text: { type: Type.STRING, description: "A one-sentence news headline representing life in the city." },
+    text: { type: Type.STRING },
     type: { type: Type.STRING, enum: ['positive', 'negative', 'neutral'] },
   },
   required: ['text', 'type'],
 };
 
 export const generateNewsEvent = async (stats: CityStats, recentAction: string | null): Promise<NewsItem | null> => {
-  const context = `City Stats - Pop: ${stats.population}, Money: ${stats.money}, Day: ${stats.day}. ${recentAction ? `Recent Action: ${recentAction}` : ''}`;
-  const prompt = "Generate a very short, isometric-sim-city style news headline based on the city state. Can be funny, cynical, or celebratory.";
+  const context = `Roman City Stats - Pop: ${stats.population}, Denarii: ${stats.money}.`;
+  const prompt = "Generate a very short, ancient Roman news headline (e.g., Chariot races, Senate decrees, Gods' favor).";
 
   try {
     const response = await ai.models.generateContent({
@@ -104,7 +90,7 @@ export const generateNewsEvent = async (stats: CityStats, recentAction: string |
       config: {
         responseMimeType: "application/json",
         responseSchema: newsSchema,
-        temperature: 1.1, // High temp for variety
+        temperature: 1.1,
       },
     });
 
@@ -129,15 +115,31 @@ const quizSchema = {
   properties: {
     question: { type: Type.STRING },
     options: { type: Type.ARRAY, items: { type: Type.STRING }, minItems: 4, maxItems: 4 },
-    correctIndex: { type: Type.INTEGER, description: "Index of the correct option (0-3)" },
-    explanation: { type: Type.STRING, description: "Short explanation of the grammar rule." },
+    correctIndex: { type: Type.INTEGER },
+    explanation: { type: Type.STRING, description: "Very brief grammar explanation." },
   },
   required: ['question', 'options', 'correctIndex', 'explanation'],
 };
 
-export const generateESLQuestion = async (topics: string[]): Promise<QuizQuestion | null> => {
-  const topic = topics[Math.floor(Math.random() * topics.length)];
-  const prompt = `Generate a multiple-choice grammar question testing "${topic}". The difficulty should be intermediate. Ensure the sentence context is related to cities, urban life, or history if possible.`;
+export const generateESLQuestion = async (topic: string): Promise<QuizQuestion | null> => {
+  // Map building topics to specific grammar constraints
+  let promptDetails = "";
+  if (topic === 'Past Simple') {
+    promptDetails = "Focus on completed actions in the past. (e.g., built, walked, ate).";
+  } else if (topic === 'Past Continuous') {
+    promptDetails = "Focus on actions in progress at a specific time in the past (e.g., was walking, were sleeping).";
+  } else if (topic === 'Past Simple vs Continuous') {
+    promptDetails = "Focus on a short action interrupting a longer action (e.g., 'I was reading when he arrived').";
+  } else if (topic === 'Subordinate Clauses') {
+    promptDetails = "Focus on time, reason, or condition clauses (e.g., using 'because', 'although', 'if', 'when').";
+  } else {
+    promptDetails = "General past tense grammar.";
+  }
+
+  const prompt = `Generate a Multiple Choice English Grammar question for A2-B1 ESL learners.
+  Topic: ${topic}. ${promptDetails}
+  Context: Ancient Rome (Gladiators, Emperors, Daily Life).
+  Keep the language simple.`;
   
   try {
     const response = await ai.models.generateContent({
@@ -146,7 +148,7 @@ export const generateESLQuestion = async (topics: string[]): Promise<QuizQuestio
       config: {
         responseMimeType: "application/json",
         responseSchema: quizSchema,
-        temperature: 0.8,
+        temperature: 0.7,
       },
     });
 
