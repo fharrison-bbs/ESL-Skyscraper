@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #0c4a6e;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
