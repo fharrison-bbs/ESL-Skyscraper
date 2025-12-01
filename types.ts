@@ -11,6 +11,12 @@ export enum BuildingType {
   Park = 'Park',
   School = 'School',
   PowerPlant = 'PowerPlant',
+  Hospital = 'Hospital',
+  Library = 'Library',
+  Museum = 'Museum',
+  Police = 'Police',
+  FireStation = 'FireStation',
+  Stadium = 'Stadium',
 }
 
 export const TOOL_UPGRADE = 'Upgrade'; // Special tool identifier

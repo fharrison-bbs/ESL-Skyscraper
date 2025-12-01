@@ -9,7 +9,8 @@ import IsoMap from './components/IsoMap';
 import UIOverlay from './components/UIOverlay';
 import StartScreen from './components/StartScreen';
 import QuizModal from './components/QuizModal';
-import { generateCityGoal, generateNewsEvent, generateESLQuestion } from './services/geminiService';
+import { getNextCityGoal, getRandomNews, getRandomWeather, WeatherState } from './hardcodedContent';
+import { getRandomQuestion } from './questionBank';
 
 // Initialize empty grid with island shape generation for 3D visual interest
 const createInitialGrid = (): Grid => {
@@ -33,17 +34,18 @@ const createInitialGrid = (): Grid => {
 function App() {
   // --- Game State ---
   const [gameStarted, setGameStarted] = useState(false);
-  const [aiEnabled, setAiEnabled] = useState(true);
 
   const [grid, setGrid] = useState<Grid>(createInitialGrid);
   const [stats, setStats] = useState<CityStats>({ money: INITIAL_MONEY, population: 0, day: 1, grammarScore: 0 });
   const [selectedTool, setSelectedTool] = useState<string>(BuildingType.Road);
-  
-  // --- AI State ---
+
+  // --- Goal State ---
   const [currentGoal, setCurrentGoal] = useState<AIGoal | null>(null);
-  const [isGeneratingGoal, setIsGeneratingGoal] = useState(false);
   const [newsFeed, setNewsFeed] = useState<NewsItem[]>([]);
-  
+
+  // --- Weather State ---
+  const [weather, setWeather] = useState<WeatherState>(getRandomWeather());
+
   // --- Quiz State ---
   const [showQuiz, setShowQuiz] = useState(false);
   const [quizQuestion, setQuizQuestion] = useState<QuizQuestion | null>(null);
@@ -53,51 +55,53 @@ function App() {
   const gridRef = useRef(grid);
   const statsRef = useRef(stats);
   const goalRef = useRef(currentGoal);
-  const aiEnabledRef = useRef(aiEnabled);
 
   // Sync refs
   useEffect(() => { gridRef.current = grid; }, [grid]);
   useEffect(() => { statsRef.current = stats; }, [stats]);
   useEffect(() => { goalRef.current = currentGoal; }, [currentGoal]);
-  useEffect(() => { aiEnabledRef.current = aiEnabled; }, [aiEnabled]);
 
-  // --- AI Logic Wrappers ---
+  // --- Content Functions ---
 
   const addNewsItem = useCallback((item: NewsItem) => {
     setNewsFeed(prev => [...prev.slice(-12), item]); // Keep last few
   }, []);
 
-  const fetchNewGoal = useCallback(async () => {
-    if (isGeneratingGoal || !aiEnabledRef.current) return;
-    setIsGeneratingGoal(true);
-    await new Promise(r => setTimeout(r, 500));
-    
-    const newGoal = await generateCityGoal(statsRef.current, gridRef.current);
-    if (newGoal) {
-      setCurrentGoal(newGoal);
-    } else {
-      // If failed (likely rate limit), wait longer: 30s instead of 5s
-      if(aiEnabledRef.current) setTimeout(fetchNewGoal, 30000); 
-    }
-    setIsGeneratingGoal(false);
-  }, [isGeneratingGoal]); 
+  const fetchNewGoal = useCallback(() => {
+    const newGoal = getNextCityGoal(statsRef.current, gridRef.current);
+    setCurrentGoal(newGoal);
+  }, []);
 
-  const fetchNews = useCallback(async () => {
-    // chance to fetch news per tick (2 seconds)
-    // Previous was 0.15 (15%), which is ~4.5 calls/min. 
-    // Reduced to 0.02 (2%) -> ~0.6 calls/min to respect Rate Limits (15 RPM on free tier usually shared)
-    if (!aiEnabledRef.current || Math.random() > 0.02) return; 
-    const news = await generateNewsEvent(statsRef.current, null);
-    if (news) addNewsItem(news);
+  const generateNews = useCallback(() => {
+    // 10% chance to generate news per tick
+    if (Math.random() > 0.1) return;
+    const news = getRandomNews();
+    addNewsItem(news);
   }, [addNewsItem]);
 
-  const handleOpenQuiz = async () => {
+  const changeWeather = useCallback(() => {
+    // Change weather every ~30 ticks (1 minute)
+    if (Math.random() > 0.033) return;
+    const newWeather = getRandomWeather();
+    setWeather(newWeather);
+    addNewsItem({
+      id: Date.now().toString(),
+      text: `Weather update: ${newWeather.description}`,
+      type: 'neutral'
+    });
+  }, [addNewsItem]);
+
+  const handleOpenQuiz = () => {
     setShowQuiz(true);
     setQuizLoading(true);
     setQuizQuestion(null);
-    const q = await generateESLQuestion(['Past Simple', 'Past Continuous', 'Subordinate Clauses']);
-    setQuizQuestion(q);
-    setQuizLoading(false);
+
+    // Simulate a short delay for better UX
+    setTimeout(() => {
+      const q = getRandomQuestion();
+      setQuizQuestion(q);
+      setQuizLoading(false);
+    }, 300);
   };
 
   const handleQuizAnswer = (correct: boolean) => {
@@ -123,8 +127,8 @@ function App() {
   // --- Initial Setup ---
   useEffect(() => {
     if (!gameStarted) return;
-    addNewsItem({ id: Date.now().toString(), text: "Welcome. Build schools to increase contract rewards.", type: 'positive' });
-    if (aiEnabled) fetchNewGoal();
+    addNewsItem({ id: Date.now().toString(), text: "Welcome to Sky Metropolis! Build schools to increase contract rewards.", type: 'positive' });
+    fetchNewGoal();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameStarted]);
 
@@ -172,9 +176,9 @@ function App() {
           population: newPop,
           day: prev.day + 1,
         };
-        
+
         const goal = goalRef.current;
-        if (aiEnabledRef.current && goal && !goal.completed) {
+        if (goal && !goal.completed) {
           let isMet = false;
           if (goal.targetType === 'money' && newStats.money >= goal.targetValue) isMet = true;
           if (goal.targetType === 'population' && newStats.population >= goal.targetValue) isMet = true;
@@ -245,12 +249,13 @@ function App() {
         }
     }
 
-      fetchNews();
+      generateNews();
+      changeWeather();
 
     }, TICK_RATE_MS);
 
     return () => clearInterval(intervalId);
-  }, [fetchNews, gameStarted]);
+  }, [generateNews, changeWeather, gameStarted]);
 
 
   // --- Interaction Logic ---
@@ -341,8 +346,7 @@ function App() {
     }
   };
 
-  const handleStart = (enabled: boolean) => {
-    setAiEnabled(enabled);
+  const handleStart = () => {
     setGameStarted(true);
   };
 
@@ -367,9 +371,8 @@ function App() {
           currentGoal={currentGoal}
           newsFeed={newsFeed}
           onClaimReward={handleClaimReward}
-          isGeneratingGoal={isGeneratingGoal}
-          aiEnabled={aiEnabled}
           onOpenQuiz={handleOpenQuiz}
+          weather={weather}
         />
       )}
 
