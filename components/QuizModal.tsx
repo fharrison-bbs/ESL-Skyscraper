@@ -37,9 +37,9 @@ const QuizModal: React.FC<QuizModalProps> = ({ question, loading, onAnswer, onCl
         <div className="bg-slate-800 px-6 py-4 border-b border-slate-700 flex justify-between items-center">
           <div>
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <span className="text-2xl">💼</span> City Contract
+              <span className="text-2xl">📜</span> Royal Scroll
             </h2>
-            <p className="text-xs text-slate-400 uppercase tracking-widest mt-1">Complete the task for funds</p>
+            <p className="text-xs text-slate-400 uppercase tracking-widest mt-1">Complete the scroll for gold</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors text-2xl">×</button>
         </div>

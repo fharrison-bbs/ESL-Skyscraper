@@ -118,12 +118,12 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
         {/* Stats */}
         <div className="bg-gray-900/90 text-white p-2 md:p-3 rounded-xl border border-gray-700 shadow-2xl backdrop-blur-md flex gap-2 md:gap-4 items-center justify-between md:justify-start w-full md:w-auto overflow-x-auto">
           <div className="flex flex-col">
-            <span className="text-[8px] md:text-[10px] text-gray-400 uppercase font-bold tracking-widest">Treasury</span>
-            <span className="text-lg md:text-2xl font-black text-green-400 font-mono drop-shadow-md">${stats.money.toLocaleString()}</span>
+            <span className="text-[8px] md:text-[10px] text-gray-400 uppercase font-bold tracking-widest">Gold</span>
+            <span className="text-lg md:text-2xl font-black text-amber-400 font-mono drop-shadow-md">{stats.money.toLocaleString()}</span>
           </div>
           <div className="w-px h-6 md:h-8 bg-gray-700"></div>
           <div className="flex flex-col">
-            <span className="text-[8px] md:text-[10px] text-gray-400 uppercase font-bold tracking-widest">Citizens</span>
+            <span className="text-[8px] md:text-[10px] text-gray-400 uppercase font-bold tracking-widest">Workers</span>
             <span className="text-base md:text-xl font-bold text-blue-300 font-mono drop-shadow-md">{stats.population.toLocaleString()}</span>
           </div>
           <div className="w-px h-6 md:h-8 bg-gray-700"></div>
@@ -136,21 +136,21 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
           {/* Quiz Button - Major Call to Action */}
           <button
              onClick={onOpenQuiz}
-             className="flex flex-col items-center bg-gradient-to-br from-indigo-600 to-purple-700 hover:from-indigo-500 hover:to-purple-600 px-3 py-1 rounded-lg border border-indigo-400 shadow-lg animate-pulse hover:animate-none transition-transform active:scale-95"
+             className="flex flex-col items-center bg-gradient-to-br from-amber-600 to-orange-700 hover:from-amber-500 hover:to-orange-600 px-3 py-1 rounded-lg border border-amber-400 shadow-lg animate-pulse hover:animate-none transition-transform active:scale-95"
           >
-             <span className="text-[8px] md:text-[10px] text-indigo-100 uppercase font-bold tracking-widest">Work Shift</span>
+             <span className="text-[8px] md:text-[10px] text-amber-100 uppercase font-bold tracking-widest">Complete Scroll</span>
              <span className="text-sm md:text-lg font-bold text-white flex gap-1 items-center">
-                <span>Earn 💵</span>
+                <span>Earn 🪙</span>
              </span>
           </button>
         </div>
 
-        {/* City Goal Panel */}
-        <div className="w-full md:w-80 bg-indigo-900/90 text-white rounded-xl border-2 border-indigo-500/50 shadow-[0_0_20px_rgba(99,102,241,0.4)] backdrop-blur-md overflow-hidden transition-all">
-          <div className="bg-indigo-800/80 px-3 md:px-4 py-1.5 md:py-2 flex justify-between items-center border-b border-indigo-600">
+        {/* Pharaoh's Decrees Panel */}
+        <div className="w-full md:w-80 bg-amber-900/90 text-white rounded-xl border-2 border-amber-500/50 shadow-[0_0_20px_rgba(217,119,6,0.4)] backdrop-blur-md overflow-hidden transition-all">
+          <div className="bg-amber-800/80 px-3 md:px-4 py-1.5 md:py-2 flex justify-between items-center border-b border-amber-600">
             <span className="font-bold uppercase text-[10px] md:text-xs tracking-widest flex items-center gap-2 shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-              City Goals
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+              Pharaoh's Decrees
             </span>
           </div>
 
@@ -207,11 +207,11 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
           <div className="text-[8px] text-gray-500 uppercase writing-mode-vertical flex items-center justify-center font-bold tracking-widest border-l border-gray-700 pl-1 ml-1 select-none">Build</div>
         </div>
 
-        {/* News Feed */}
+        {/* Kingdom News */}
         <div className="w-full md:w-80 h-32 md:h-48 bg-black/80 text-white rounded-xl border border-gray-700/80 backdrop-blur-xl shadow-2xl flex flex-col overflow-hidden relative">
           <div className="bg-gray-800/90 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-300 border-b border-gray-600 flex justify-between items-center">
-            <span>City Feed</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+            <span>Kingdom News</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
           </div>
           
           <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_bottom,rgba(255,255,255,0)_50%,rgba(0,0,0,0.1)_50%)] bg-[length:100%_4px] opacity-30 z-20"></div>

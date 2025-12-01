@@ -17,8 +17,8 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
         <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="relative z-10">
-            <h1 className="text-4xl md:text-5xl font-black mb-2 bg-gradient-to-br from-white via-cyan-200 to-blue-400 bg-clip-text text-transparent tracking-tight text-center">
-            ESL Sky Metropolis
+            <h1 className="text-4xl md:text-5xl font-black mb-2 bg-gradient-to-br from-yellow-200 via-amber-300 to-orange-400 bg-clip-text text-transparent tracking-tight text-center">
+            Pharaoh's Kingdom
             </h1>
             <p className="text-slate-400 mb-8 text-sm font-medium uppercase tracking-widest text-center">
             Past Simple & Past Continuous
@@ -27,29 +27,29 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
             <div className="bg-slate-800/50 p-5 rounded-xl border border-slate-700/50 mb-8 shadow-inner">
               <div className="flex flex-col gap-3 text-sm text-slate-300">
                 <div className="flex items-start gap-2">
-                  <span className="text-cyan-400 text-lg">🏙️</span>
-                  <span>Build a thriving metropolis</span>
+                  <span className="text-amber-400 text-lg">🏛️</span>
+                  <span>Build a mighty Egyptian settlement along the Nile</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="text-purple-400 text-lg">📝</span>
-                  <span>Complete grammar quizzes to earn money</span>
+                  <span className="text-purple-400 text-lg">📜</span>
+                  <span>Complete grammar scrolls to earn gold</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="text-green-400 text-lg">🎯</span>
-                  <span>Achieve city goals for rewards</span>
+                  <span className="text-green-400 text-lg">👑</span>
+                  <span>Fulfill the pharaoh's decrees for rewards</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-yellow-400 text-lg">☀️</span>
-                  <span>Experience dynamic weather</span>
+                  <span>Experience the desert climate</span>
                 </div>
               </div>
             </div>
 
             <button
             onClick={onStart}
-            className="w-full py-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-cyan-900/20 transform transition-all hover:scale-[1.02] active:scale-[0.98] text-lg tracking-wide"
+            className="w-full py-4 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold rounded-xl shadow-lg shadow-amber-900/20 transform transition-all hover:scale-[1.02] active:scale-[0.98] text-lg tracking-wide"
             >
-            Start Building
+            Begin Your Reign
             </button>
 
         </div>

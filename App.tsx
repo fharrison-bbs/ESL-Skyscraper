@@ -113,21 +113,21 @@ function App() {
       const multiplier = 1 + (schoolCount * 0.5);
       const reward = Math.round(QUIZ_REWARD_BASE * multiplier);
       
-      setStats(prev => ({ 
-        ...prev, 
+      setStats(prev => ({
+        ...prev,
         money: prev.money + reward,
         grammarScore: prev.grammarScore + 1
       }));
-      addNewsItem({ id: Date.now().toString(), text: `Task completed! Earned $${reward}.`, type: 'positive' });
+      addNewsItem({ id: Date.now().toString(), text: `Scroll completed! Earned ${reward} gold.`, type: 'positive' });
     } else {
-       addNewsItem({ id: Date.now().toString(), text: `Paperwork rejected. No funds awarded.`, type: 'negative' });
+       addNewsItem({ id: Date.now().toString(), text: `Scroll rejected by scribes. No gold awarded.`, type: 'negative' });
     }
   };
 
   // --- Initial Setup ---
   useEffect(() => {
     if (!gameStarted) return;
-    addNewsItem({ id: Date.now().toString(), text: "Welcome to Sky Metropolis! Build schools to increase contract rewards.", type: 'positive' });
+    addNewsItem({ id: Date.now().toString(), text: "Welcome to Pharaoh's Kingdom! Build scribe halls to increase scroll rewards.", type: 'positive' });
     fetchNewGoal();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameStarted]);
@@ -351,7 +351,7 @@ function App() {
   };
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden selection:bg-transparent selection:text-transparent bg-sky-900">
+    <div className="relative w-screen h-screen overflow-hidden selection:bg-transparent selection:text-transparent bg-amber-800">
       <IsoMap 
         grid={grid} 
         onTileClick={handleTileClick} 
